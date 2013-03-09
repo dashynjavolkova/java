@@ -36,6 +36,10 @@ public class AVLTree<K extends Comparable<K>, V extends Comparable<V>>
 		return (height(node.right) - height(node.left));
 	}
 
+	public int length() {
+		return balanceFactor(root);
+	}
+
 	private void fixHeight(Node node) {
 		int heightLeft = height(node.left);
 		int heightRight = height(node.right);
@@ -86,19 +90,24 @@ public class AVLTree<K extends Comparable<K>, V extends Comparable<V>>
 	private boolean keySearch(Node node, K key) {
 		if (node == null)
 			return false;
-		int compare = node.key.compareTo(key);
-		if (compare == 0)
-			return true;
-		else if (compare < 0)
-			return keySearch(node.right, key);
-		return keySearch(node.left, key);
+		else {
+			int compare = node.key.compareTo(key);
+			if (compare == 0)
+				return true;
+			else if (compare < 0)
+				return keySearch(node.right, key);
+			return keySearch(node.left, key);
 
+		}
 	}
 
 	@Override
 	public boolean containsKey(Object arg0) {
 		K key = (K) arg0;
-		return keySearch(root, key);
+		if (root == null)
+			return false;
+		else
+			return keySearch(root, key);
 	}
 
 	@Override
@@ -113,14 +122,20 @@ public class AVLTree<K extends Comparable<K>, V extends Comparable<V>>
 	}
 
 	private V getInternal(Node node, K key) {
-		if (node == null)
+		if (!containsKey(key))
 			return null;
-		int compare = node.key.compareTo(key);
-		if (compare == 0)
-			return node.value;
-		if (compare > 0)
-			return getInternal(node.left, key);
-		return getInternal(node.right, key);
+		else {
+			if (node == null)
+				return null;
+			else {
+				int compare = node.key.compareTo(key);
+				if (compare == 0)
+					return node.value;
+				if (compare > 0)
+					return getInternal(node.left, key);
+				return getInternal(node.right, key);
+			}
+		}
 	}
 
 	@Override
@@ -209,55 +224,64 @@ public class AVLTree<K extends Comparable<K>, V extends Comparable<V>>
 			return (findMinimalElement(node.left));
 	}
 
-	private Node removeMinimalElement(Node node) {
-		if (node.left == null)
-			return node.right;
-		node.left = removeMinimalElement(node.left);
-		return balance(node);
-	}
+	V returnValue;
+	boolean flag = false;
 
 	private V removeElement(Node node, Node parent, K key) {
+
 		if (node == null) {
 			return null;
 		}
+
 		int compare = node.key.compareTo(key);
 		if (compare < 0)
 			removeElement(node.right, node, key);
 		else if (compare > 0)
 			removeElement(node.left, node, key);
-		else if (compare == 0) {
+		else {
+			flag = true;
 			Node nodeLeft = node.left;
 			Node nodeRight = node.right;
-			V returnValue;
 			returnValue = node.value;
 			--size;
-			int compareRemove = parent.key.compareTo(node.key);
-			if (compareRemove > 0) {
-				parent.left = null;
-			} else
-				parent.right = null;
+			if (parent != null) {
+				int compareRemove = parent.key.compareTo(node.key);
+				if (compareRemove > 0) {
+					parent.left = null;
+				} else
+					parent.right = null;
+			}
 			node.key = null;
 			node.value = null;
 			node.left = null;
 			node.right = null;
 			if (nodeLeft != null || nodeRight != null) {
 				Node min = findMinimalElement(root.right);
-				min.right = removeMinimalElement(root.right);
+				if (root.key.compareTo(key) == 0)
+					root = min;
+				removeElement(root.right, root, min.key);
 				min.left = nodeLeft;
+				min.right = nodeRight;
 				balance(min);
-			} else
-				balance(node);
-			return returnValue;
+			}
+
 		}
 
 		balance(node);
-		return null;
-
+		if (!flag) {
+			return null;
+		} else
+			return returnValue;
 	}
 
 	@Override
 	public V remove(Object arg0) {
 		K key = (K) arg0;
+		if (root.key.compareTo(key) == 0&root.left==null&root.right==null)
+			{V rootValue=root.value;
+			root=null;
+			return rootValue;
+			}
 		return removeElement(root, null, key);
 	}
 
